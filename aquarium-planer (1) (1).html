@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Aquarium-Planer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: aquarium band on top, quick-add bar, then four columns (tabs on phones). Soft pastel world, rounded but not uniform. */
+:root{
+  --bg:#f5f2fa; --surface:#fffdff; --surface2:#f0ebf8; --ink:#353049; --muted:#746d8c; --line:#e5def0;
+  --accent:#8b74e0; --accent-ink:#ffffff; --accent-soft:#e7e0fb;
+  --mint:#c9eedd; --mint-ink:#1f6b4c; --butter:#fff0b8; --butter-ink:#7a5a00; --rose:#fbd0dc; --rose-ink:#9b2c4b; --sky:#cfe6fb; --peach:#ffdcc9;
+  --water1:#e3f5f9; --water2:#b5deec; --sand:#f4e6cc; --sand2:#eadab8; --ray:rgba(255,255,255,.35);
+  --r-allg:#ebe7f3; --r-wohn:#ffdcc9; --r-kueche:#fff0b8; --r-bad:#cfe6fb; --r-gbad:#c8efef; --r-schlaf:#e3d9fb; --r-flur:#f1e4d3;
+  --r-keller:#dddbe8; --r-balkon:#cdeed6; --r-auto:#fbd0dc; --r-aqua:#bfe9f2; --r-hund:#f8dfb8;
+  --shadow:0 6px 24px rgba(80,60,140,.10);
+  --font-display:"Fredoka","Nunito",ui-rounded,system-ui,sans-serif;
+  --font-body:"Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#1b1928; --surface:#252237; --surface2:#2e2a44; --ink:#ece8f8; --muted:#a8a1c4; --line:#3a3553;
+  --accent:#b4a3f5; --accent-ink:#1b1928; --accent-soft:#3a3360;
+  --mint:#2c4d40; --mint-ink:#b9f0d6; --butter:#4d4428; --butter-ink:#ffe9a3; --rose:#52303d; --rose-ink:#ffc4d3; --sky:#2a3d55; --peach:#4f382e;
+  --water1:#1f3d4d; --water2:#142a38; --sand:#4a4033; --sand2:#3d3428; --ray:rgba(255,255,255,.06);
+  --r-allg:#34304a; --r-wohn:#4f382e; --r-kueche:#4d4428; --r-bad:#2a3d55; --r-gbad:#234647; --r-schlaf:#3b3360; --r-flur:#463c31;
+  --r-keller:#3a3947; --r-balkon:#2b4a35; --r-auto:#52303d; --r-aqua:#22454f; --r-hund:#4d3f28;
+  --shadow:0 6px 24px rgba(0,0,0,.35); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#1b1928; --surface:#252237; --surface2:#2e2a44; --ink:#ece8f8; --muted:#a8a1c4; --line:#3a3553;
+  --accent:#b4a3f5; --accent-ink:#1b1928; --accent-soft:#3a3360;
+  --mint:#2c4d40; --mint-ink:#b9f0d6; --butter:#4d4428; --butter-ink:#ffe9a3; --rose:#52303d; --rose-ink:#ffc4d3; --sky:#2a3d55; --peach:#4f382e;
+  --water1:#1f3d4d; --water2:#142a38; --sand:#4a4033; --sand2:#3d3428; --ray:rgba(255,255,255,.06);
+  --r-allg:#34304a; --r-wohn:#4f382e; --r-kueche:#4d4428; --r-bad:#2a3d55; --r-gbad:#234647; --r-schlaf:#3b3360; --r-flur:#463c31;
+  --r-keller:#3a3947; --r-balkon:#2b4a35; --r-auto:#52303d; --r-aqua:#22454f; --r-hund:#4d3f28;
+  --shadow:0 6px 24px rgba(0,0,0,.35); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 96px;display:flex;flex-direction:column;gap:16px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.top h1{font-family:var(--font-display);font-weight:600;font-size:clamp(26px,5vw,36px);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.top .date{color:var(--muted);font-weight:700;margin-top:4px}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tool{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:700}
+.tool:hover{border-color:var(--accent)}
+.tool .n{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 7px;font-size:12px;line-height:18px}
+.tool.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* aquarium */
+.tank{position:relative;border-radius:28px 28px 22px 22px;overflow:hidden;box-shadow:var(--shadow);border:3px solid var(--surface)}
+.tank canvas{display:block;width:100%;height:220px;touch-action:manipulation;cursor:pointer}
+.tank .cap-label{position:absolute;left:14px;top:10px;font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--ink);background:color-mix(in srgb,var(--surface) 75%,transparent);padding:3px 10px;border-radius:999px;pointer-events:none}
+.tank .hint{position:absolute;right:12px;top:10px;font-size:12px;color:var(--muted);font-weight:700;background:color-mix(in srgb,var(--surface) 70%,transparent);padding:3px 10px;border-radius:999px;pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);font-weight:700}
+.legend span b{font-weight:800;color:var(--ink)}
+
+/* quick add */
+.quick{background:var(--surface);border-radius:20px;padding:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.quick-row{display:flex;gap:8px}
+.quick input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--surface2);border-radius:14px;padding:12px 14px;font-weight:600}
+.quick input:focus{border-color:var(--accent);outline:none}
+.btn{border:0;border-radius:14px;padding:10px 16px;font-weight:800;background:var(--surface2);color:var(--ink)}
+.btn.acc{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line)}
+.btn.danger{background:var(--rose);color:var(--rose-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.preview{display:flex;flex-wrap:wrap;gap:6px;min-height:0}
+.preview:empty{display:none}
+.qhelp{font-size:12.5px;color:var(--muted)}
+.qhelp code{font-family:inherit;font-weight:800;color:var(--ink);background:var(--surface2);padding:0 5px;border-radius:6px}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:12.5px;font-weight:700;background:var(--surface2);white-space:nowrap}
+.chip.p1{background:var(--mint);color:var(--mint-ink)} .chip.p2{background:var(--butter);color:var(--butter-ink)} .chip.p3{background:var(--rose);color:var(--rose-ink)}
+.chip.warn{background:var(--rose);color:var(--rose-ink)} .chip.soon{background:var(--peach)} .chip.ex{background:transparent;border:1px dashed var(--muted);color:var(--muted)}
+
+/* filters */
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;align-items:center;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.fchip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;white-space:nowrap}
+.fchip.on{background:var(--accent-soft);border-color:var(--accent)}
+.filters select{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px}
+.flabel{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+
+/* tabs + board */
+.tabs{display:none;gap:6px;background:var(--surface);padding:5px;border-radius:16px;box-shadow:var(--shadow)}
+.tab{flex:1;border:0;background:transparent;border-radius:12px;padding:9px 4px;font-weight:800;font-size:13.5px;color:var(--muted);min-width:0}
+.tab.on{background:var(--accent-soft);color:var(--ink)}
+.tab .c{font-size:11.5px;opacity:.8}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+.col{background:var(--surface);border-radius:22px;padding:14px 12px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;min-width:0}
+.col-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 4px}
+.col-h h2{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0}
+.col-h .sub{font-size:12.5px;color:var(--muted);font-weight:700}
+.list{display:flex;flex-direction:column;gap:8px}
+.empty{color:var(--muted);font-size:13.5px;padding:10px 6px;text-align:center}
+.add-in{border:1.5px dashed var(--line);background:transparent;border-radius:14px;padding:9px;font-weight:800;color:var(--muted)}
+.add-in:hover{border-color:var(--accent);color:var(--ink)}
+.sublabel{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:6px 4px 0}
+details.done-box summary{cursor:pointer;font-size:13px;font-weight:800;color:var(--muted);padding:4px}
+details.done-box .list{margin-top:6px}
+
+/* capacity */
+.cap{border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;background:var(--surface2)}
+.cap-bar{height:9px;border-radius:9px;background:var(--line);overflow:hidden}
+.cap-bar span{display:block;height:100%;border-radius:9px;background:var(--mint-ink);opacity:.55;transition:width .4s}
+.cap.tight .cap-bar span{background:var(--butter-ink)} .cap.over .cap-bar span{background:var(--rose-ink)}
+.cap-row{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.cap-row b{font-variant-numeric:tabular-nums}
+.cap-row input,.cap-row select{border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:2px 6px;font-weight:700;font-size:13px}
+.cap-msg{font-size:13px;font-weight:700;border-radius:10px;padding:6px 9px}
+.cap.ok .cap-msg{background:var(--mint);color:var(--mint-ink)} .cap.tight .cap-msg{background:var(--butter);color:var(--butter-ink)} .cap.over .cap-msg{background:var(--rose);color:var(--rose-ink)}
+.cap.rest .cap-msg{background:var(--sky)}
+.cap-msg button{margin-top:6px;display:block;border:0;border-radius:10px;padding:6px 10px;font-weight:800;background:var(--surface);color:var(--ink)}
+.dl-banner{border:0;text-align:left;border-radius:12px;padding:8px 10px;background:var(--peach);font-weight:700;font-size:13px}
+
+/* task card */
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 8px 10px 10px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line);position:relative}
+.task::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:5px;border-radius:0 6px 6px 0;background:var(--room)}
+.check{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--pc);background:var(--surface);display:grid;place-items:center;margin-left:4px;font-size:15px;font-weight:900;color:var(--accent-ink);transition:transform .15s}
+.check:hover{transform:scale(1.08)}
+.task.done .check{background:var(--accent);border-color:var(--accent)}
+.task.done .t-title{text-decoration:line-through;color:var(--muted)}
+.t-body{min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:5px;border:0;background:none;text-align:left;padding:0}
+.t-title{font-weight:800;font-size:15px;overflow-wrap:anywhere}
+.t-meta{display:flex;flex-wrap:wrap;gap:4px}
+.dots{letter-spacing:1px;font-size:10px}
+.more{border:0;background:transparent;border-radius:10px;width:32px;height:32px;font-size:20px;line-height:1;color:var(--muted);font-weight:900}
+.more:hover{background:var(--surface2)}
+.nofit{font-size:12px;font-weight:800;color:var(--rose-ink)}
+.rolled{font-size:12px;font-weight:700;color:var(--muted)}
+.steps-mini{height:5px;border-radius:5px;background:var(--line);overflow:hidden;max-width:140px}
+.steps-mini span{display:block;height:100%;background:var(--accent)}
+.steps{grid-column:2/4;display:flex;flex-direction:column;gap:4px;padding-top:2px}
+.step{display:flex;gap:8px;align-items:center;border:0;background:var(--surface2);border-radius:10px;padding:6px 9px;text-align:left;font-weight:600;font-size:14px}
+.step .b{width:18px;height:18px;border-radius:6px;border:2px solid var(--accent);display:grid;place-items:center;font-size:11px;flex:none;color:var(--accent-ink)}
+.step.on .b{background:var(--accent)}
+.step.on span:last-child{text-decoration:line-through;color:var(--muted)}
+
+/* sheets */
+.overlay{position:fixed;inset:0;background:rgba(30,20,60,.35);z-index:50;display:flex;align-items:flex-end;justify-content:center;padding-top:env(safe-area-inset-top,0px)}
+.overlay[hidden]{display:none!important}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:calc(100% - 24px);overflow-y:auto;border-radius:26px 26px 0 0;padding:18px max(18px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px;animation:up .22s ease-out}
+@media (min-width:640px){ .overlay{align-items:center} .sheet{border-radius:26px} }
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h3{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0;text-wrap:balance}
+.sheet .lead{color:var(--muted);margin:-6px 0 0;font-size:14px}
+.sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.x{border:0;background:var(--surface2);border-radius:50%;width:34px;height:34px;font-size:18px;flex:none}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label,.field>.lbl{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.field input[type=text],.field input[type=date],.field input[type=number]{border:1.5px solid var(--line);background:var(--surface2);border-radius:12px;padding:10px 12px;font-weight:600;width:100%}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13.5px}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt.room.on{background:var(--rb);border-color:var(--ink)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions .btn{flex:1}
+.menu{display:flex;flex-direction:column;gap:6px}
+.menu button{border:0;background:var(--surface2);border-radius:14px;padding:12px 14px;text-align:left;font-weight:800;font-size:15px}
+.menu button.del{background:var(--rose);color:var(--rose-ink)}
+.steplist{display:flex;flex-direction:column;gap:6px}
+.steplist .row{display:flex;gap:6px;align-items:center}
+.steplist .row span{flex:1;background:var(--surface2);border-radius:10px;padding:7px 10px;font-weight:600;overflow-wrap:anywhere;min-width:0}
+.steplist .row button{border:0;background:transparent;font-size:18px;color:var(--muted);width:32px}
+.note{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:12px;padding:8px 10px}
+
+/* focus */
+.ring{position:relative;width:180px;height:180px;margin:0 auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-size:38px;font-weight:600;font-variant-numeric:tabular-nums}
+.focus-title{font-family:var(--font-display);font-size:26px;font-weight:600;text-align:center;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+
+/* wheel */
+.slot{height:120px;border-radius:20px;background:var(--surface2);display:grid;place-items:center;text-align:center;padding:10px 16px;font-family:var(--font-display);font-size:24px;font-weight:600;overflow:hidden;overflow-wrap:anywhere}
+.slot.final{background:var(--accent-soft);animation:pop .35s}
+@keyframes pop{50%{transform:scale(1.05)}}
+
+/* review */
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:130px;padding-top:14px}
+.bar{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;font-size:12px;font-weight:700;color:var(--muted)}
+.bar i{display:block;width:100%;max-width:34px;border-radius:9px 9px 4px 4px;background:var(--accent);opacity:.75;min-height:3px}
+.bar b{color:var(--ink);font-variant-numeric:tabular-nums}
+.bar.today i{opacity:1}
+.stat-row{display:flex;gap:8px;flex-wrap:wrap}
+.stat{flex:1;min-width:120px;background:var(--surface2);border-radius:16px;padding:10px 12px}
+.stat b{display:block;font-family:var(--font-display);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted);font-weight:700}
+.rv-day{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:4px}
+.rv-item{display:flex;gap:8px;align-items:center;padding:5px 0;font-weight:600;border-bottom:1px solid var(--line)}
+.rv-item .e{font-family:var(--emoji);font-size:18px;width:24px;text-align:center}
+.rv-item span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+
+/* games */
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.game{border:1.5px solid var(--line);background:var(--surface2);border-radius:18px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.game .e{font-size:30px;font-family:var(--emoji)}
+.game b{font-family:var(--font-display);font-size:17px;font-weight:600}
+.game span{font-size:13px;color:var(--muted)}
+.game:disabled{opacity:.5}
+.gcanvas{width:100%;height:340px;border-radius:18px;display:block;touch-action:none;background:var(--water1)}
+.ghud{display:flex;justify-content:space-between;font-weight:800;font-variant-numeric:tabular-nums}
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mem button{aspect-ratio:1;max-width:100%;border:0;border-radius:14px;background:var(--accent-soft);font-size:28px;font-family:var(--emoji)}
+.mem button.open{background:var(--sky)} .mem button.got{background:var(--mint)}
+.token-line{background:var(--accent-soft);border-radius:14px;padding:10px 12px;font-weight:700}
+
+/* naming */
+.big-e{font-size:64px;text-align:center;font-family:var(--emoji);line-height:1}
+
+/* toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--bg);border-radius:18px;padding:10px 10px 10px 16px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);width:min(520px,calc(100% - 32px));font-weight:700}
+.toast[hidden]{display:none!important}
+.toast span{flex:1;min-width:0}
+.toast button{border:0;border-radius:12px;padding:7px 11px;font-weight:800;background:color-mix(in srgb,var(--bg) 18%,transparent);color:var(--bg);white-space:nowrap}
+
+.welcome{background:var(--surface);border-radius:22px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.welcome h2{font-family:var(--font-display);font-weight:600;margin:0;font-size:22px}
+.welcome p{margin:0;color:var(--muted);max-width:60ch}
+.sync{font-size:12px;color:var(--muted);font-weight:700;text-align:center}
+
+@media (max-width:899px){
+  .tabs{display:flex}
+  .board{grid-template-columns:minmax(0,1fr)}
+  .col{display:none} .col.on{display:flex}
+  .tank canvas{height:190px}
+  .tool .lbl{display:none}
+  .tool{padding:9px 12px}
+}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Mein Aquarium</h1>
+      <div class="date" id="today-label"></div>
+    </div>
+    <div class="tools">
+      <button class="tool primary" data-act="focus-open" title="Fokus-Modus">🎯 <span class="lbl">Fokus</span></button>
+      <button class="tool" data-act="wheel-open" title="Glücksrad">🎡 <span class="lbl">Glücksrad</span></button>
+      <button class="tool" data-act="games-open" title="Mini-Spiele">🎮 <span class="lbl">Spiele</span> <span class="n" id="token-n">0</span></button>
+      <button class="tool" data-act="review-open" title="Rückblick">🏆 <span class="lbl">Rückblick</span></button>
+    </div>
+  </header>
+
+  <section class="tank" aria-label="Dein Aquarium">
+    <canvas id="tank"></canvas>
+    <div class="cap-label" id="tank-count">Leeres Becken</div>
+    <div class="hint">Tippe einen Bewohner an</div>
+  </section>
+  <div class="legend">
+    <span><b>Prio niedrig</b> → Pflanzen &amp; Muscheln</span>
+    <span><b>Prio mittel</b> → Fische</span>
+    <span><b>Prio hoch</b> → Schildkröte, Qualle, Delfin …</span>
+    <span><b>Selten</b> → Wal oder Schatz ✨</span>
+  </div>
+
+  <section class="quick">
+    <form class="quick-row" id="quick-form" autocomplete="off">
+      <input id="quick" type="text" placeholder="z. B. Küche putzen morgen hoch 20min" aria-label="Schnelleingabe">
+      <button class="btn acc" type="submit" aria-label="Hinzufügen">＋</button>
+      <button class="btn" type="button" data-act="new">Details</button>
+    </form>
+    <div class="preview" id="preview"></div>
+    <div class="qhelp">Erkennt: <code>heute</code> <code>morgen</code> <code>freitag</code> <code>bis 25.10.</code> <code>irgendwann</code> · <code>hoch</code> <code>mittel</code> <code>niedrig</code> · <code>15min</code> <code>1h</code> · <code>täglich</code> <code>wöchentlich</code> · Räume wie <code>Küche</code> <code>Auto</code> <code>Hund</code></div>
+  </section>
+
+  <div id="welcome-slot"></div>
+
+  <div class="filters" id="filters"></div>
+
+  <nav class="tabs" id="tabs"></nav>
+  <main class="board" id="board"></main>
+  <div class="sync" id="sync"></div>
+</div>
+
+<div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden><span id="toast-msg"></span><div id="toast-btns" style="display:flex;gap:6px"></div></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- constants ---------- */
+const ROOMS=[['allg','Allgemein','📋'],['wohn','Wohnzimmer','🛋️'],['kueche','Küche','🍳'],['bad','Bad','🛁'],['gbad','Gästebad','🚿'],['schlaf','Schlafzimmer','🛏️'],['flur','Flur','🚪'],['keller','Keller','📦'],['balkon','Balkon','🌿'],['auto','Auto','🚗'],['aqua','Aquarium','🐠'],['hund','Hund','🐶']];
+const RM=Object.fromEntries(ROOMS.map(r=>[r[0],{k:r[0],l:r[1],e:r[2]}]));
+const ROOM_WORDS={wohnzimmer:'wohn',küche:'kueche',kueche:'kueche',bad:'bad',badezimmer:'bad',gästebad:'gbad',gaestebad:'gbad','gäste-wc':'gbad',gästeklo:'gbad',schlafzimmer:'schlaf',flur:'flur',keller:'keller',balkon:'balkon',auto:'auto',aquarium:'aqua',becken:'aqua',hund:'hund',gassi:'hund'};
+const ENERGY={low:['🪫','leicht'],mid:['⚡','mittel'],high:['🔥','anstrengend']};
+const PRIO={1:'niedrig',2:'mittel',3:'hoch'};
+const RECUR={none:'einmalig',daily:'täglich',weekly:'wöchentlich',monthly:'monatlich'};
+const REWARDS={
+ 1:[['🌿','Seegras','floor'],['🌱','Pflänzchen','floor'],['🐚','Muschel','floor'],['🪨','Stein','floor'],['🪸','Koralle','floor']],
+ 2:[['🐟','Fisch','swim'],['🐠','Tropenfisch','swim'],['🐡','Kugelfisch','swim'],['🦐','Garnele','swim'],['🦀','Krabbe','floor'],['🐌','Schnecke','floor']],
+ 3:[['🐢','Schildkröte','swim'],['🐙','Oktopus','swim'],['🦑','Tintenfisch','swim'],['🪼','Qualle','float'],['🐬','Delfin','swim'],['🦭','Robbe','swim']],
+ rare:[['🐋','Wal','swim'],['🦈','Hai','swim'],['💎','Schatz','floor'],['🐳','Blauwal','swim']]
+};
+const MOVE_REASONS=['Keine Energie','Keine Zeit','Kam was dazwischen','Brauche erst etwas','Keine Lust (ist okay)','Passt morgen besser'];
+const DEL_REASONS=['Nicht mehr wichtig','Hat sich erledigt','Jemand anderes macht\'s','Doppelt eingetragen','Zu groß, plane neu'];
+const WD=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const WDS=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const CID=Math.random().toString(36).slice(2);
+const LS_KEY='aqplan.v1', LS_UI='aqplan.ui';
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const today=()=>ymd(new Date());
+const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const addMonths=(s,n)=>{const d=pd(s);const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return ymd(d)};
+const diff=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
+const fmtD=s=>{const d=pd(s);return WDS[d.getDay()]+', '+d.getDate()+'.'+(d.getMonth()+1)+'.'};
+const fmtMin=m=>{m=Math.round(m);if(m<60)return m+' min';const h=Math.floor(m/60),r=m%60;return h+' h'+(r?' '+r+' min':'')};
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+
+/* ---------- state ---------- */
+function blank(){return{v:1,tasks:[],items:[],history:{},log:[],totalDone:0,gamesUsed:0,best:{},settings:{endTime:'21:00',tomorrowH:4},started:false,updatedAt:0}}
+let S=blank();
+let UI={tab:'heute',energy:'all',room:'all',open:{}};
+try{const u=JSON.parse(lsGet(LS_UI)||'null');if(u)UI=Object.assign(UI,u,{open:{}})}catch(e){}
+function saveUI(){lsSet(LS_UI,JSON.stringify({tab:UI.tab,energy:UI.energy,room:UI.room}))}
+function normalize(s){const b=blank();s=Object.assign(b,s||{});s.settings=Object.assign(blank().settings,s.settings||{});
+  ['tasks','items','log'].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[]});if(!s.history||typeof s.history!=='object')s.history={};if(!s.best)s.best={};return s}
+function prune(){const cut=Date.now()-35*864e5;S.tasks=S.tasks.filter(t=>!(t.done&&t.doneAt<cut));if(S.log.length>150)S.log=S.log.slice(-150);
+  const hk=Object.keys(S.history).sort();while(hk.length>60){delete S.history[hk.shift()]}}
+
+/* ---------- storage: db per person, local fallback ---------- */
+let ref=null, saving=false, again=false, timer=null, ready=false, dbMode='local';
+function persist(){S.updatedAt=Date.now();lsSet(LS_KEY,JSON.stringify(S));clearTimeout(timer);timer=setTimeout(flush,600)}
+async function flush(){ if(!ref)return; if(saving){again=true;return} saving=true;
+  try{await ref.set(JSON.parse(JSON.stringify(Object.assign({},S,{client:CID}))));setSync('')}
+  catch(e){ if(e&&e.code==='unavailable'){setTimeout(flush,1500+Math.random()*1000)} else if(e&&e.code==='quota_exceeded'){setSync('Speicher voll – alte Einträge bitte löschen.')} else {setSync('Speichern hat nicht geklappt. Deine Änderungen bleiben in diesem Browser.')} }
+  saving=false; if(again){again=false;flush()} }
+function setSync(t){$('#sync').textContent=t}
+async function initStore(){
+  try{const l=JSON.parse(lsGet(LS_KEY)||'null');if(l){S=normalize(l)}}catch(e){}
+  prune(); render(); tank.sync();
+  let db=null,user=null;
+  try{ if(window.claude&&window.claude.use){ [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]) } }catch(e){}
+  let id=null; try{ if(user) id=await user.id() }catch(e){}
+  if(db&&id){
+    try{
+      ref=db.doc('data/users/'+id+'/planer');
+      const snap=await ref.get();
+      if(snap.exists){ const d=snap.data(); if(!S.updatedAt||(d.updatedAt||0)>=S.updatedAt){S=normalize(JSON.parse(JSON.stringify(d)));delete S.client} else flush() }
+      else if(S.started){ flush() }
+      dbMode='db';
+      ref.onSnapshot(sn=>{ if(!sn.exists||sn.metadata.hasPendingWrites)return; const d=sn.data(); if(d.client===CID)return; if((d.updatedAt||0)>S.updatedAt&&!saving){S=normalize(JSON.parse(JSON.stringify(d)));delete S.client;lsSet(LS_KEY,JSON.stringify(S));render();tank.sync()} },()=>{});
+    }catch(e){ ref=null }
+  }
+  if(dbMode==='local') setSync('Gespeichert in diesem Browser.');
+  ready=true; prune(); render(); tank.sync();
+}
+
+/* ---------- task queries ---------- */
+const T=()=>S.tasks;
+function bucketOf(t){ if(t.when==='someday')return'irgendwann'; if(t.when==='due')return'datum'; const td=today(); if(t.date<=td)return'heute'; if(t.date===addDays(td,1))return'morgen'; return'spaeter' }
+function passFilter(t){ if(UI.energy!=='all'&&t.energy!==UI.energy)return false; if(UI.room!=='all'&&t.room!==UI.room)return false; return true }
+function sortOpen(a,b){ return (b.prio-a.prio)||((a.date||a.due||'')<(b.date||b.due||'')?-1:1)||(a.created-b.created) }
+function openIn(b){ return T().filter(t=>!t.done&&bucketOf(t)===b) }
+function capacity(which){
+  const list=openIn(which).sort(sortOpen); const planned=list.reduce((s,t)=>s+(t.min||15),0);
+  let free; if(which==='heute'){const[h,m]=S.settings.endTime.split(':').map(Number);const e=new Date();e.setHours(h,m,0,0);free=Math.max(0,Math.round((e-Date.now())/60000))} else free=S.settings.tomorrowH*60;
+  let cum=0; const nofit=new Set(); list.forEach(t=>{cum+=t.min||15; if(cum>free)nofit.add(t.id)});
+  const noTime=list.filter(t=>!t.min).length;
+  let st='ok'; if(which==='heute'&&free===0)st=list.length?'over':'rest'; else if(planned>free)st='over'; else if(planned>free*0.75)st='tight';
+  return{list,planned,free,nofit,st,noTime}
+}
+
+/* ---------- rendering ---------- */
+const COLS=[['heute','Heute'],['morgen','Morgen'],['datum','Bis Datum'],['irgendwann','Irgendwann']];
+function render(){
+  const d=new Date(); $('#today-label').textContent=WD[d.getDay()]+', '+d.getDate()+'. '+MON[d.getMonth()];
+  $('#token-n').textContent=tokens();
+  // welcome
+  const ws=$('#welcome-slot');
+  if(!S.started&&!S.tasks.length){ ws.innerHTML=ready?`<div class="welcome"><h2>Willkommen in deinem Aquarium</h2><p>Jede erledigte Aufgabe bringt einen neuen Bewohner ins Becken. Je höher die Prio, desto besonderer das Tier. Willst du mit ein paar Beispiel-Aufgaben starten? Du kannst sie jederzeit löschen.</p><div class="actions"><button class="btn acc" data-act="start-ex">Mit Beispielen starten</button><button class="btn ghost" data-act="start-empty">Leer starten</button></div></div>`:`<div class="welcome"><p>Dein Aquarium wird geladen …</p></div>` } else ws.innerHTML='';
+  // filters
+  const rooms=['all',...ROOMS.map(r=>r[0])];
+  $('#filters').innerHTML=`<span class="flabel">Energie</span>`+[['all','Alle'],['low','🪫 leicht'],['mid','⚡ mittel'],['high','🔥 anstrengend']].map(([k,l])=>`<button class="fchip ${UI.energy===k?'on':''}" data-act="f-energy" data-v="${k}">${l}</button>`).join('')+
+   `<span class="flabel" style="margin-left:6px">Raum</span><select id="room-filter" aria-label="Raum filtern">${rooms.map(k=>`<option value="${k}" ${UI.room===k?'selected':''}>${k==='all'?'Alle Räume':RM[k].e+' '+RM[k].l}</option>`).join('')}</select>`;
+  // tabs
+  $('#tabs').innerHTML=COLS.map(([k,l])=>{const n=k==='datum'?openIn('datum').length:openIn(k).length;return`<button class="tab ${UI.tab===k?'on':''}" data-act="tab" data-v="${k}">${l} <span class="c">${n||''}</span></button>`}).join('');
+  // board
+  $('#board').innerHTML=COLS.map(([k,l])=>colHTML(k,l)).join('');
+  $('#tank-count').textContent=S.items.length?S.items.length+(S.items.length===1?' Bewohner':' Bewohner'):'Leeres Becken';
+}
+function colHTML(k,label){
+  let body='',sub='',cap=null;
+  if(k==='heute'||k==='morgen'){
+    cap=capacity(k); const list=cap.list.filter(passFilter);
+    sub=list.length?list.length+' offen':'';
+    let banner='';
+    if(k==='heute'){const dl=openIn('datum').filter(t=>t.due<=today()).length; if(dl)banner=`<button class="dl-banner" data-act="tab" data-v="datum">⏰ ${dl===1?'1 Deadline ist':dl+' Deadlines sind'} heute fällig oder drüber</button>`}
+    body=capHTML(k,cap)+banner+`<div class="list">${list.length?list.map(t=>taskHTML(t,{nofit:cap.nofit.has(t.id)})).join(''):`<div class="empty">${k==='heute'?'Nichts offen für heute. Gönn dir eine Pause 🌊':'Morgen ist noch frei.'}</div>`}</div>`;
+    if(k==='heute'){const dn=T().filter(t=>t.done&&t.doneDate===today()).filter(passFilter); if(dn.length)body+=`<details class="done-box" ${UI.open.doneBox?'open':''} data-act-toggle="doneBox"><summary>✓ Heute erledigt (${dn.length})</summary><div class="list">${dn.map(t=>taskHTML(t,{})).join('')}</div></details>`}
+  } else if(k==='datum'){
+    const list=openIn('datum').filter(passFilter).sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:b.prio-a.prio);
+    const later=openIn('spaeter').filter(passFilter).sort((a,b)=>a.date<b.date?-1:1);
+    sub=list.length?list.length+' offen':'';
+    body=`<div class="list">${list.length?list.map(t=>taskHTML(t,{})).join(''):'<div class="empty">Keine Deadlines. Schreib z. B. „Rechnung zahlen bis 30.10.“</div>'}</div>`;
+    if(later.length)body+=`<div class="sublabel">Geplant für später</div><div class="list">${later.map(t=>taskHTML(t,{})).join('')}</div>`;
+  } else {
+    const list=openIn('irgendwann').filter(passFilter).sort(sortOpen);
+    sub=list.length?list.length+' offen':'';
+    body=`<div class="list">${list.length?list.map(t=>taskHTML(t,{})).join(''):'<div class="empty">Hier landen Dinge wie „Keller ausmisten“.</div>'}</div>`;
+  }
+  return`<section class="col ${UI.tab===k?'on':''}" data-col="${k}"><div class="col-h"><h2>${label}</h2><span class="sub">${sub}</span></div>${body}<button class="add-in" data-act="new" data-when="${k}">＋ Aufgabe</button></section>`;
+}
+function capHTML(k,c){
+  const pct=c.free?Math.min(100,c.planned/c.free*100):(c.planned?100:0);
+  let msg;
+  if(c.st==='rest')msg='Dein Tag ist eigentlich vorbei. Ruh dich aus 🌙';
+  else if(c.st==='ok')msg=c.list.length?'✓ Passt gut, du hast noch Puffer.':'Noch nichts geplant.';
+  else if(c.st==='tight')msg='Wird knapp. Plan lieber etwas Luft ein, Dinge dauern oft länger.';
+  else msg=`Zu viel: rund ${fmtMin(c.planned-c.free)} drüber. Die Aufgaben mit ⏳ passen ${k==='heute'?'heute':'morgen'} eher nicht.${k==='heute'&&c.nofit.size?`<button data-act="push-nofit">⏳ ${c.nofit.size} nach morgen schieben</button>`:''}`;
+  const ctl=k==='heute'?`frei bis <input type="time" id="cap-end" value="${esc(S.settings.endTime)}" aria-label="Zeit bis">`:`Zeit morgen <select id="cap-tom" aria-label="Zeit morgen">${[1,2,3,4,5,6,8,10].map(h=>`<option value="${h}" ${S.settings.tomorrowH===h?'selected':''}>${h} h</option>`).join('')}</select>`;
+  return`<div class="cap ${c.st}"><div class="cap-bar"><span style="width:${pct}%"></span></div><div class="cap-row"><span><b>${fmtMin(c.planned)}</b> geplant</span><span>·</span><span><b>${fmtMin(c.free)}</b> ${ctl}</span></div>${c.noTime?`<div class="rolled">${c.noTime} ohne Zeitangabe, gerechnet mit je 15 min</div>`:''}<div class="cap-msg">${msg}</div></div>`;
+}
+function taskHTML(t,o){
+  const r=RM[t.room]||RM.allg; const td=today(); const chips=[];
+  chips.push(`<span class="chip" style="background:var(--r-${r.k})">${r.e} ${r.l}</span>`);
+  chips.push(`<span class="chip p${t.prio}" title="Prio ${PRIO[t.prio]}"><span class="dots">${'●'.repeat(t.prio)}${'○'.repeat(3-t.prio)}</span> ${PRIO[t.prio]}</span>`);
+  if(t.min)chips.push(`<span class="chip">⏱ ${fmtMin(t.min)}</span>`);
+  if(t.energy)chips.push(`<span class="chip">${ENERGY[t.energy][0]} ${ENERGY[t.energy][1]}</span>`);
+  if(t.recur&&t.recur!=='none')chips.push(`<span class="chip">🔁 ${RECUR[t.recur]}</span>`);
+  if(t.when==='due'&&!t.done){const dd=diff(td,t.due);chips.push(`<span class="chip ${dd<0?'warn':dd<=2?'soon':''}">📅 ${dd<0?'überfällig seit '+fmtD(t.due):dd===0?'heute fällig':dd===1?'bis morgen':'bis '+fmtD(t.due)}</span>`)}
+  if(t.when==='day'&&!t.done&&t.date>addDays(td,1))chips.push(`<span class="chip">📅 ${fmtD(t.date)}</span>`);
+  if(t.ex)chips.push(`<span class="chip ex">Beispiel</span>`);
+  const sd=t.steps.filter(s=>s.done).length;
+  const rolled=t.when==='day'&&!t.done&&t.date<td?`<span class="rolled">↪ von ${diff(t.date,td)===1?'gestern':fmtD(t.date)} übernommen</span>`:'';
+  const open=UI.open[t.id];
+  const it=t.done?S.items.find(i=>i.tid===t.id):null;
+  return`<article class="task ${t.done?'done':''}" style="--room:var(--r-${r.k});--pc:var(--${t.prio===3?'rose-ink':t.prio===2?'butter-ink':'mint-ink'})">
+    <button class="check" data-act="done" data-id="${t.id}" aria-label="${t.done?'Wieder öffnen':'Erledigt'}">${t.done?'✓':''}</button>
+    <button class="t-body" data-act="expand" data-id="${t.id}"><span class="t-title">${esc(t.title)}${it?` <span style="font-family:var(--emoji)">${it.e}</span>`:''}</span>${rolled}<span class="t-meta">${chips.join('')}</span>
+    ${t.steps.length?`<span style="display:flex;gap:8px;align-items:center;font-size:12px;font-weight:800;color:var(--muted)"><span class="steps-mini" style="flex:1"><span style="width:${sd/t.steps.length*100}%"></span></span>${sd}/${t.steps.length} Schritte</span>`:''}
+    ${o.nofit&&!t.done?'<span class="nofit">⏳ passt zeitlich eher nicht mehr</span>':''}</button>
+    <button class="more" data-act="menu" data-id="${t.id}" aria-label="Optionen">⋯</button>
+    ${open&&t.steps.length?`<div class="steps">${t.steps.map(s=>`<button class="step ${s.done?'on':''}" data-act="step" data-id="${t.id}" data-s="${s.id}"><span class="b">${s.done?'✓':''}</span><span>${esc(s.t)}</span></button>`).join('')}</div>`:''}
+  </article>`;
+}
+
+/* ---------- actions ---------- */
+let undoSnap=null;
+function snap(){undoSnap=JSON.stringify(S)}
+function commit(){persist();render();tank.sync()}
+function find(id){return S.tasks.find(t=>t.id===id)}
+function mkTask(o){return Object.assign({id:uid(),title:'',when:'day',date:today(),due:null,room:'allg',prio:2,min:null,energy:null,recur:'none',steps:[],done:false,doneAt:null,doneDate:null,created:Date.now(),ex:false},o)}
+function addTask(o){S.started=true;const t=mkTask(o);S.tasks.push(t);commit();return t}
+function nextDate(base,recur){return recur==='daily'?addDays(base,1):recur==='weekly'?addDays(base,7):addMonths(base,1)}
+function complete(id){
+  const t=find(id); if(!t)return; snap();
+  if(t.done){ // reopen
+    t.done=false;t.doneAt=null;const dd=t.doneDate;t.doneDate=null;
+    if(dd&&S.history[dd])S.history[dd]--; S.totalDone=Math.max(0,S.totalDone-1);
+    S.items=S.items.filter(i=>i.tid!==t.id); S.tasks=S.tasks.filter(x=>!(x.from===t.id&&!x.done));
+    commit(); toast('Wieder offen.',[['Rückgängig',undo]]); return;
+  }
+  t.done=true;t.doneAt=Date.now();t.doneDate=today();t.steps.forEach(s=>s.done=true);
+  S.history[t.doneDate]=(S.history[t.doneDate]||0)+1; S.totalDone++;
+  const rare=Math.random()<(t.prio===3?0.12:0.04);
+  const [e,name,kind]=pick(rare?REWARDS.rare:REWARDS[t.prio]);
+  const item={id:uid(),e,name:'',kind:name,type:kind,tid:t.id,task:t.title,date:today(),tier:rare?4:t.prio,x:rnd(.08,.92),y:kind==='swim'?rnd(.14,.66):kind==='float'?rnd(.18,.45):0,sp:rnd(.7,1.3)};
+  S.items.push(item);
+  if(t.recur&&t.recur!=='none'){
+    const n=mkTask({title:t.title,room:t.room,prio:t.prio,min:t.min,energy:t.energy,recur:t.recur,steps:t.steps.map(s=>({id:uid(),t:s.t,done:false})),from:t.id,when:t.when});
+    if(t.when==='due')n.due=nextDate(t.due>today()?t.due:today(),t.recur); else if(t.when==='day')n.date=nextDate(t.date>today()?t.date:today(),t.recur); S.tasks.push(n);
+  }
+  commit(); tank.burst(item.id);
+  const left=3-(S.totalDone%3);
+  toast(`${rare?'✨ Selten! ':''}Neu im Aquarium: ${e} ${name}${left===3?' · 🎮 Neues Spiel frei!':''}`,[['Benennen',()=>nameSheet(item.id)],['Rückgängig',undo]]);
+}
+function undo(){ if(!undoSnap)return; S=normalize(JSON.parse(undoSnap)); undoSnap=null; commit(); toast('Rückgängig gemacht.',[]) }
+function moveTask(id,to,reason){
+  const t=find(id);if(!t)return; snap(); const td=today();
+  if(to==='heute'){t.when='day';t.date=td} else if(to==='morgen'){t.when='day';t.date=addDays(td,1)} else if(to==='irgendwann'){t.when='someday'}
+  if(reason)S.log.push({type:'move',title:t.title,reason,to,date:td});
+  commit(); toast(`Verschoben nach ${to==='heute'?'Heute':to==='morgen'?'Morgen':'Irgendwann'}.`,[['Rückgängig',undo]]);
+}
+function deleteTask(id,reason){
+  const t=find(id);if(!t)return; snap();
+  S.tasks=S.tasks.filter(x=>x.id!==id); S.log.push({type:'del',title:t.title,reason:reason||'Ohne Grund',date:today()});
+  commit(); toast('Gelöscht.',[['Rückgängig',undo]]);
+}
+function toggleStep(id,sid){
+  const t=find(id);if(!t)return;const s=t.steps.find(x=>x.id===sid);if(!s)return; s.done=!s.done;
+  if(s.done){tank.bubbles();}
+  commit();
+  if(s.done&&t.steps.every(x=>x.done)&&!t.done){toast('Alle Schritte geschafft! Aufgabe abhaken?',[['Abhaken ✓',()=>complete(id)]])}
+}
+function tokens(){return Math.max(0,Math.floor(S.totalDone/3)-S.gamesUsed)}
+
+/* ---------- examples ---------- */
+function startExamples(){
+  const td=today(),tm=addDays(td,1);
+  const st=a=>a.map(x=>({id:uid(),t:x,done:false}));
+  const ex=[
+    {title:'Gassi gehen',room:'hund',prio:3,min:30,energy:'mid',recur:'daily'},
+    {title:'Fische füttern',room:'aqua',prio:2,min:5,energy:'low',recur:'daily'},
+    {title:'Spülmaschine ausräumen',room:'kueche',prio:2,min:10,energy:'low'},
+    {title:'Wäsche zusammenlegen',room:'schlaf',prio:1,min:20,energy:'low',steps:st(['Socken sortieren','Shirts falten','Wegräumen'])},
+    {title:'Bad putzen',date:tm,room:'bad',prio:2,min:30,energy:'high',steps:st(['Waschbecken','Toilette','Spiegel','Boden'])},
+    {title:'Wasserwechsel Aquarium',date:tm,room:'aqua',prio:3,min:40,energy:'mid',recur:'weekly'},
+    {title:'Auto zum TÜV bringen',when:'due',due:addDays(td,9),room:'auto',prio:3,min:60,energy:'mid'},
+    {title:'Handtücher im Gästebad wechseln',when:'due',due:addDays(td,3),room:'gbad',prio:1,min:5,energy:'low'},
+    {title:'Keller ausmisten',when:'someday',room:'keller',prio:1,min:120,energy:'high',steps:st(['Eine Kiste durchsehen','Müll raus','Spenden-Tüte packen'])},
+    {title:'Balkonpflanzen winterfest machen',when:'someday',room:'balkon',prio:2,min:45,energy:'mid'},
+    {title:'Schuhe im Flur sortieren',when:'someday',room:'flur',prio:1,min:15,energy:'low'}
+  ];
+  ex.forEach(o=>S.tasks.push(mkTask(Object.assign({ex:true},o))));
+  S.started=true; commit();
+}
+
+/* ---------- quick input parsing ---------- */
+function parseDateWord(w){
+  w=w.toLowerCase().replace(/[,;!?]+$/,''); const td=today();
+  if(w==='heute')return td; if(w==='morgen')return addDays(td,1); if(w==='übermorgen'||w==='uebermorgen')return addDays(td,2);
+  const wi=WD.findIndex(d=>d.toLowerCase()===w); if(wi>=0){let a=(wi-new Date().getDay()+7)%7;if(a===0)a=7;return addDays(td,a)}
+  const m=w.match(/^(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?$/); if(m){let y=m[3]?+m[3]:new Date().getFullYear();if(y<100)y+=2000;const d=new Date(y,+m[2]-1,+m[1]);if(isNaN(d)||d.getDate()!==+m[1])return null;let s=ymd(d);if(!m[3]&&s<td){d.setFullYear(y+1);s=ymd(d)}return s}
+  return null;
+}
+function parseQuick(text){
+  const tk=text.trim().split(/\s+/).filter(Boolean); const o={}; const keep=[];
+  for(let i=0;i<tk.length;i++){
+    const raw=tk[i], w=raw.toLowerCase().replace(/[,;:?]+$/,''), nx=(tk[i+1]||'').toLowerCase();
+    if(w==='bis'&&nx){const d=parseDateWord(nx);if(d){o.when='due';o.due=d;i++;continue}}
+    const d=parseDateWord(w); if(d){o.when='day';o.date=d;continue}
+    if(w==='irgendwann'||w==='irgendwann.'){o.when='someday';continue}
+    if(['hoch','wichtig','dringend','!!!','prio3'].includes(w)){o.prio=3;continue}
+    if(['mittel','!!','prio2'].includes(w)){o.prio=2;continue}
+    if(['niedrig','unwichtig','!','prio1'].includes(w)){o.prio=1;continue}
+    let m=w.match(/^(\d+)(min|m|minuten)$/); if(m){o.min=+m[1];continue}
+    m=w.match(/^(\d+(?:[.,]\d+)?)(h|std|stunde|stunden)$/); if(m){o.min=Math.round(parseFloat(m[1].replace(',','.'))*60);continue}
+    if(/^\d+(?:[.,]\d+)?$/.test(w)){ if(/^(min|minuten)$/.test(nx)){o.min=+w;i++;continue} if(/^(h|std|stunde|stunden)$/.test(nx)){o.min=Math.round(parseFloat(w.replace(',','.'))*60);i++;continue} }
+    if(w==='täglich'||w==='taeglich'){o.recur='daily';continue}
+    if(w==='wöchentlich'||w==='woechentlich'){o.recur='weekly';continue}
+    if(w==='monatlich'){o.recur='monthly';continue}
+    if(w==='jeden'&&/^(tag|woche|monat)$/.test(nx)){o.recur=nx==='tag'?'daily':nx==='woche'?'weekly':'monthly';i++;continue}
+    if(w==='jede'&&nx==='woche'){o.recur='weekly';i++;continue}
+    if(w==='leicht'){o.energy='low';continue}
+    if(w==='anstrengend'||w==='schwer'){o.energy='high';continue}
+    const rw=ROOM_WORDS[w.replace(/[.:]$/,'')]; if(rw&&!o.room)o.room=rw;
+    keep.push(raw);
+  }
+  let title=keep.join(' ').trim(); if(title)title=title[0].toUpperCase()+title.slice(1);
+  o.title=title; return o;
+}
+function defaultsFor(tab){const td=today(); if(tab==='morgen')return{when:'day',date:addDays(td,1)}; if(tab==='irgendwann')return{when:'someday'}; return{when:'day',date:td}}
+function previewChips(o){
+  if(!o.title)return'';const c=[];const td=today();
+  const w=o.when||defaultsFor(UI.tab).when, dt=o.date||defaultsFor(UI.tab).date;
+  c.push(`<span class="chip">${w==='due'?'📅 bis '+fmtD(o.due):w==='someday'?'🌙 Irgendwann':dt===td?'☀️ Heute':dt===addDays(td,1)?'🌅 Morgen':'📅 '+fmtD(dt)}</span>`);
+  const r=RM[o.room||'allg'];c.push(`<span class="chip" style="background:var(--r-${r.k})">${r.e} ${r.l}</span>`);
+  const p=o.prio||2;c.push(`<span class="chip p${p}">${PRIO[p]}</span>`);
+  if(o.min)c.push(`<span class="chip">⏱ ${fmtMin(o.min)}</span>`); if(o.energy)c.push(`<span class="chip">${ENERGY[o.energy][0]} ${ENERGY[o.energy][1]}</span>`); if(o.recur)c.push(`<span class="chip">🔁 ${RECUR[o.recur]}</span>`);
+  return c.join('');
+}
+
+/* ---------- sheets ---------- */
+let onClose=null;
+function openSheet(html,mount,close){ $('#sheet').innerHTML=html; $('#overlay').hidden=false; onClose=close||null; if(mount)mount($('#sheet')); }
+function closeSheet(){ if(onClose){const f=onClose;onClose=null;f()} $('#overlay').hidden=true; $('#sheet').innerHTML=''; }
+$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeSheet()});
+const head=(t,lead)=>`<div class="sheet-h"><div><h3>${t}</h3>${lead?`<p class="lead" style="margin-top:4px">${lead}</p>`:''}</div><button class="x" data-act="close" aria-label="Schließen">✕</button></div>`;
+
+function formSheet(id,preset){
+  const ex=id?find(id):null; const td=today();
+  const d=ex?JSON.parse(JSON.stringify(ex)):mkTask(preset||{}); delete d._k;
+  let whenKey=ex?(ex.when==='due'?'datum':ex.when==='someday'?'irgendwann':ex.date===td||ex.date<td?'heute':ex.date===addDays(td,1)?'morgen':'tag'):(preset&&preset._k)||'heute';
+  if(!ex&&whenKey==='datum'&&!d.due)d.due=addDays(td,7);
+  const draw=()=>{
+    const o=(k,v,l,cur,extra='')=>`<button type="button" class="opt ${extra} ${cur===v?'on':''}" data-k="${k}" data-v="${v}" ${extra==='room'?`style="--rb:var(--r-${v})"`:''}>${l}</button>`;
+    openSheet(head(ex?'Aufgabe bearbeiten':'Neue Aufgabe')+`
+    <div class="field"><label for="f-title">Was ist zu tun?</label><input type="text" id="f-title" value="${esc(d.title)}" placeholder="z. B. Bad putzen"></div>
+    <div class="field"><span class="lbl">Wann</span><div class="opts">${o('when','heute','☀️ Heute',whenKey)}${o('when','morgen','🌅 Morgen',whenKey)}${o('when','tag','📅 An einem Tag',whenKey)}${o('when','datum','⏰ Bis Datum',whenKey)}${o('when','irgendwann','🌙 Irgendwann',whenKey)}</div>
+      ${whenKey==='tag'?`<input type="date" id="f-date" value="${d.date||addDays(td,2)}">`:''}${whenKey==='datum'?`<input type="date" id="f-due" value="${d.due||addDays(td,7)}">`:''}</div>
+    <div class="field"><span class="lbl">Raum</span><div class="opts">${ROOMS.map(r=>o('room',r[0],r[2]+' '+r[1],d.room,'room')).join('')}</div></div>
+    <div class="field"><span class="lbl">Prio-Punkte</span><div class="opts">${o('prio',1,'● niedrig → Pflanze',d.prio)}${o('prio',2,'●● mittel → Fisch',d.prio)}${o('prio',3,'●●● hoch → Besonderes',d.prio)}</div></div>
+    <div class="field"><span class="lbl">Wie lange ungefähr?</span><div class="opts">${[5,10,15,30,45,60,90,120].map(m=>o('min',m,fmtMin(m),d.min)).join('')}${o('min',0,'Weiß nicht',d.min||0)}</div></div>
+    <div class="field"><span class="lbl">Energie</span><div class="opts">${o('energy','low','🪫 leicht',d.energy)}${o('energy','mid','⚡ mittel',d.energy)}${o('energy','high','🔥 anstrengend',d.energy)}</div></div>
+    <div class="field"><span class="lbl">Wiederholen</span><div class="opts">${Object.entries(RECUR).map(([k,l])=>o('recur',k,l,d.recur)).join('')}</div></div>
+    <div class="field"><span class="lbl">Mini-Schritte</span><div class="steplist">${d.steps.map(s=>`<div class="row"><span>${esc(s.t)}</span><button type="button" data-rm="${s.id}" aria-label="Schritt entfernen">✕</button></div>`).join('')}
+      <div class="row" style="gap:6px"><input type="text" id="f-step" placeholder="Kleiner erster Schritt …" style="flex:1;border:1.5px solid var(--line);background:var(--surface2);border-radius:12px;padding:9px 12px;font-weight:600;min-width:0"><button type="button" class="btn" id="f-addstep" style="width:auto">＋</button></div></div></div>
+    <div class="actions"><button class="btn ghost" data-act="close">Abbrechen</button><button class="btn acc" id="f-save">${ex?'Speichern':'Hinzufügen'}</button></div>`,
+    sh=>{
+      const keepTitle=()=>{d.title=sh.querySelector('#f-title').value;const fd=sh.querySelector('#f-date');if(fd&&fd.value)d.date=fd.value;const fu=sh.querySelector('#f-due');if(fu&&fu.value)d.due=fu.value};
+      sh.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{keepTitle();const k=b.dataset.k,v=b.dataset.v;
+        if(k==='when')whenKey=v; else if(k==='prio')d.prio=+v; else if(k==='min')d.min=+v||null; else if(k==='energy')d.energy=d.energy===v?null:v; else d[k]=v; draw();});
+      sh.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{keepTitle();d.steps=d.steps.filter(s=>s.id!==b.dataset.rm);draw()});
+      const addStep=()=>{const v=sh.querySelector('#f-step').value.trim();if(!v)return;keepTitle();d.steps.push({id:uid(),t:v,done:false});draw();setTimeout(()=>{const f=$('#f-step');f&&f.focus()},0)};
+      sh.querySelector('#f-addstep').onclick=addStep; sh.querySelector('#f-step').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addStep()}};
+      sh.querySelector('#f-save').onclick=()=>{keepTitle(); d.title=d.title.trim(); if(!d.title){sh.querySelector('#f-title').focus();sh.querySelector('#f-title').placeholder='Bitte einen Titel eingeben';return}
+        if(whenKey==='heute'){d.when='day';d.date=td} else if(whenKey==='morgen'){d.when='day';d.date=addDays(td,1)} else if(whenKey==='tag'){d.when='day';d.date=d.date&&d.date>td?d.date:addDays(td,2)} else if(whenKey==='datum'){d.when='due';d.due=d.due||addDays(td,7)} else d.when='someday';
+        if(ex){snap();Object.assign(ex,d);ex.ex=false;commit();toast('Gespeichert.',[['Rückgängig',undo]])} else {S.started=true;S.tasks.push(d);commit();toast('Hinzugefügt.',[])}
+        closeSheet();};
+      if(!ex&&!d.title)setTimeout(()=>{const f=$('#f-title');f&&f.focus()},50);
+    });
+  };
+  draw();
+}
+function menuSheet(id){
+  const t=find(id);if(!t)return; const b=bucketOf(t);
+  const items=[['edit','✏️ Bearbeiten'],['focus','🎯 Im Fokus-Modus starten']];
+  if(b!=='heute')items.push(['to-heute','☀️ Nach Heute holen']);
+  if(b!=='morgen')items.push(['to-morgen','🌅 Auf morgen verschieben']);
+  if(b!=='irgendwann')items.push(['to-irgendwann','🌙 Auf irgendwann schieben']);
+  openSheet(head(esc(t.title))+`<div class="menu">${items.map(([k,l])=>`<button data-m="${k}">${l}</button>`).join('')}<button class="del" data-m="del">🗑 Löschen</button></div>`,sh=>{
+    sh.querySelectorAll('[data-m]').forEach(x=>x.onclick=()=>{const m=x.dataset.m;
+      if(m==='edit')formSheet(id); else if(m==='focus'){closeSheet();focusSheet(id)} else if(m==='to-heute'){closeSheet();moveTask(id,'heute')}
+      else if(m==='to-morgen')reasonSheet(id,'morgen'); else if(m==='to-irgendwann')reasonSheet(id,'irgendwann'); else reasonSheet(id,'del');});
+  });
+}
+function reasonSheet(id,to){
+  const t=find(id);if(!t)return; const del=to==='del'; let sel=null;
+  const reasons=del?DEL_REASONS:MOVE_REASONS;
+  const draw=()=>openSheet(head(del?'Warum löschst du das?':'Warum verschiebst du das?',esc(t.title))+
+    `<div class="note">${del?'Loslassen ist auch eine Entscheidung. Das ist völlig okay.':'Kein schlechtes Gewissen. Du planst nur neu. Die Gründe siehst du später im Rückblick.'}</div>
+    <div class="opts">${reasons.map(r=>`<button class="opt ${sel===r?'on':''}" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+    <div class="field"><label for="r-text">Eigene Erklärung (optional)</label><input type="text" id="r-text" placeholder="z. B. warte auf Ersatzteil"></div>
+    <div class="actions"><button class="btn ghost" data-act="close">Abbrechen</button><button class="btn ${del?'danger':'acc'}" id="r-ok">${del?'Löschen':to==='morgen'?'Auf morgen':'Auf irgendwann'}</button></div>`,sh=>{
+      sh.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const v=sh.querySelector('#r-text').value;sel=sel===b.dataset.r?null:b.dataset.r;draw();$('#r-text').value=v});
+      sh.querySelector('#r-ok').onclick=()=>{const txt=sh.querySelector('#r-text').value.trim();const r=[sel,txt].filter(Boolean).join(': ')||'Ohne Grund';closeSheet();del?deleteTask(id,r):moveTask(id,to,r)};
+    });
+  draw();
+}
+function nameSheet(itemId){
+  const it=S.items.find(i=>i.id===itemId);if(!it)return;
+  openSheet(head(it.name?esc(it.name):'Neuer Bewohner')+`<div class="big-e">${it.e}</div>
+    <div class="note">${esc(it.kind)} · eingezogen am ${fmtD(it.date)} für „${esc(it.task)}“${it.tier===4?' · ✨ selten':''}</div>
+    <div class="field"><label for="n-name">Name</label><input type="text" id="n-name" value="${esc(it.name)}" placeholder="z. B. Blubbi" maxlength="24"></div>
+    <div class="actions"><button class="btn ghost" data-act="close">Später</button><button class="btn acc" id="n-ok">Speichern</button></div>`,sh=>{
+      const inp=sh.querySelector('#n-name'); setTimeout(()=>inp.focus(),50);
+      const ok=()=>{it.name=inp.value.trim();commit();closeSheet()}; sh.querySelector('#n-ok').onclick=ok; inp.onkeydown=e=>{if(e.key==='Enter')ok()};
+    });
+}
+
+/* ---------- focus mode ---------- */
+let F=null, audio=null, wake=null;
+function chime(){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();[523,659,784].forEach((f,i)=>{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0,audio.currentTime+i*.18);g.gain.linearRampToValueAtTime(.2,audio.currentTime+i*.18+.02);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+i*.18+.6);o.connect(g).connect(audio.destination);o.start(audio.currentTime+i*.18);o.stop(audio.currentTime+i*.18+.7)})}catch(e){}}
+function focusCandidates(){return openIn('heute').filter(passFilter).sort(sortOpen)}
+function focusSheet(id){
+  const c=focusCandidates(); if(!id){ if(!c.length){toast('Für heute ist nichts offen. Hol dir was aus Morgen oder Irgendwann.',[]);return} id=c[0].id }
+  if(F&&F.iv)clearInterval(F.iv);
+  F={id,total:600,left:600,end:0,run:false,iv:null};
+  const draw=()=>{const t=find(F.id); if(!t){closeSheet();return}
+    const r=54,C=2*Math.PI*r, frac=F.left/F.total;
+    const mm=Math.floor(F.left/60),ss=Math.floor(F.left%60);
+    $('#sheet').innerHTML=head('Fokus','Nur diese eine Sache. Der Rest kann warten.')+
+    `<p class="focus-title">${esc(t.title)}</p><div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap"><span class="chip" style="background:var(--r-${t.room})">${RM[t.room].e} ${RM[t.room].l}</span><span class="chip p${t.prio}">${PRIO[t.prio]}</span>${t.min?`<span class="chip">geschätzt ${fmtMin(t.min)}</span>`:''}</div>
+    <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--line)" stroke-width="10"/><circle id="ring-p" cx="60" cy="60" r="${r}" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-frac)}"/></svg><div class="t" id="ring-t">${pad(mm)}:${pad(ss)}</div></div>
+    <div class="opts" style="justify-content:center">${[5,10,15,25].map(m=>`<button class="opt ${F.total===m*60?'on':''}" data-fm="${m}">${m} min</button>`).join('')}</div>
+    <div class="actions"><button class="btn acc" id="f-run">${F.run?'⏸ Pause':F.left<F.total?'▶ Weiter':'▶ Los, nur '+Math.round(F.total/60)+' Minuten'}</button></div>
+    ${t.steps.length?`<div class="steps" style="grid-column:auto">${t.steps.map(s=>`<button class="step ${s.done?'on':''}" data-fs="${s.id}"><span class="b">${s.done?'✓':''}</span><span>${esc(s.t)}</span></button>`).join('')}</div>`:''}
+    <div class="actions"><button class="btn" id="f-next">Andere Aufgabe</button><button class="btn" id="f-done" style="background:var(--mint);color:var(--mint-ink)">✓ Erledigt</button></div>`;
+    const sh=$('#sheet');
+    sh.querySelectorAll('[data-fm]').forEach(b=>b.onclick=()=>{stop();F.total=F.left=+b.dataset.fm*60;draw()});
+    sh.querySelector('#f-run').onclick=()=>{ if(F.run){stop();draw();return} try{audio=audio||new (window.AudioContext||window.webkitAudioContext)()}catch(e){} F.run=true;F.end=Date.now()+F.left*1000;
+      try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(w=>wake=w).catch(()=>{})}catch(e){}
+      F.iv=setInterval(tick,250);draw()};
+    sh.querySelectorAll('[data-fs]').forEach(b=>b.onclick=()=>{toggleStep(F.id,b.dataset.fs);draw()});
+    sh.querySelector('#f-next').onclick=()=>{const list=focusCandidates();if(list.length<2){toast('Keine andere Aufgabe für heute.',[]);return}const i=list.findIndex(x=>x.id===F.id);F.id=list[(i+1)%list.length].id;stop();F.left=F.total;draw()};
+    sh.querySelector('#f-done').onclick=()=>{const tid=F.id;stop();closeSheet();complete(tid)};
+  };
+  const stop=()=>{F.run=false;if(F.iv)clearInterval(F.iv);F.iv=null;try{wake&&wake.release()}catch(e){}wake=null};
+  const tick=()=>{F.left=Math.max(0,(F.end-Date.now())/1000);const r=54,C=2*Math.PI*r;const p=$('#ring-p'),tt=$('#ring-t');
+    if(p)p.setAttribute('stroke-dashoffset',C*(1-F.left/F.total)); if(tt)tt.textContent=pad(Math.floor(F.left/60))+':'+pad(Math.floor(F.left%60));
+    if(F.left<=0){stop();chime();draw();toast('Zeit ist um! Super, dass du drangeblieben bist. Fertig oder noch eine Runde?',[])}};
+  openSheet('',null,()=>{stop()}); draw();
+}
+
+/* ---------- wheel ---------- */
+function wheelSheet(){
+  let c=openIn('heute').filter(passFilter); let src='heute';
+  if(!c.length){c=openIn('irgendwann').filter(passFilter);src='irgendwann'}
+  if(!c.length){toast('Keine offenen Aufgaben zum Auslosen.',[]);return}
+  let chosen=null, spinning=false;
+  const draw=()=>{openSheet(head('Glücksrad','Kannst du dich nicht entscheiden? Das Rad nimmt dir die Wahl ab.')+
+    `<div class="note">Lost aus ${c.length} offenen Aufgaben von ${src==='heute'?'heute':'irgendwann'}${UI.energy!=='all'?' (Energie: '+ENERGY[UI.energy][1]+')':''}.</div>
+    <div class="slot" id="slot">${chosen?esc(chosen.title):'🎡'}</div>
+    <div class="actions"><button class="btn" id="w-spin">${chosen?'Nochmal drehen':'Drehen'}</button>${chosen?'<button class="btn acc" id="w-go">🎯 Los geht\'s</button>':''}</div>`,sh=>{
+      sh.querySelector('#w-spin').onclick=spin; const g=sh.querySelector('#w-go'); if(g)g.onclick=()=>{const id=chosen.id;closeSheet();focusSheet(id)};
+    })};
+  const spin=()=>{ if(spinning)return; spinning=true; const slot=$('#slot'); slot.classList.remove('final'); let n=0,delay=50; const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; const total=reduce?1:18+Math.floor(Math.random()*6);
+    const step=()=>{chosen=pick(c); slot.textContent=chosen.title; n++; if(n<total){delay*=1.13;setTimeout(step,delay)} else {spinning=false;draw();$('#slot').classList.add('final')}}; step(); };
+  draw();
+}
+
+/* ---------- review ---------- */
+function reviewSheet(){
+  const td=today(); const days=[...Array(7)].map((_,i)=>addDays(td,i-6));
+  const counts=days.map(d=>S.history[d]||0); const max=Math.max(1,...counts); const total=counts.reduce((a,b)=>a+b,0);
+  const since=pd(days[0]).getTime(); const done=T().filter(t=>t.done&&t.doneAt>=since).sort((a,b)=>b.doneAt-a.doneAt);
+  const mins=done.reduce((s,t)=>s+(t.min||0),0);
+  const byRoom={}; done.forEach(t=>byRoom[t.room]=(byRoom[t.room]||0)+1); const top=Object.entries(byRoom).sort((a,b)=>b[1]-a[1])[0];
+  const lg=S.log.filter(l=>diff(l.date,td)<=30); const rc={}; lg.forEach(l=>{const k=l.reason.split(':')[0];rc[k]=(rc[k]||0)+1}); const rtop=Object.entries(rc).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const groups={}; done.forEach(t=>{(groups[t.doneDate]=groups[t.doneDate]||[]).push(t)});
+  openSheet(head('Rückblick',total?`Du hast in den letzten 7 Tagen ${total} ${total===1?'Sache':'Dinge'} geschafft. Das zählt.`:'Diese Woche ist noch leer. Eine kleine Aufgabe reicht für den Anfang.')+
+   `<div class="bars">${days.map((d,i)=>`<div class="bar ${d===td?'today':''}"><b>${counts[i]||''}</b><i style="height:${counts[i]/max*85}%"></i><span>${d===td?'heute':WDS[pd(d).getDay()]}</span></div>`).join('')}</div>
+   <div class="stat-row"><div class="stat"><b>${total}</b><span>erledigt (7 Tage)</span></div><div class="stat"><b>${fmtMin(mins)}</b><span>geschätzte Zeit</span></div><div class="stat"><b>${S.items.length}</b><span>Aquarium-Bewohner</span></div></div>
+   ${top?`<div class="note">Am meisten geschafft: <b>${RM[top[0]].e} ${RM[top[0]].l}</b> (${top[1]}×)</div>`:''}
+   ${Object.keys(groups).length?Object.keys(groups).sort().reverse().map(d=>`<div><div class="rv-day">${d===td?'Heute':diff(d,td)===1?'Gestern':fmtD(d)}</div>${groups[d].map(t=>{const it=S.items.find(i=>i.tid===t.id);return`<div class="rv-item"><span class="e">${it?it.e:'✓'}</span><span>${esc(t.title)}</span><span class="chip" style="background:var(--r-${t.room})">${RM[t.room].e}</span></div>`}).join('')}</div>`).join(''):''}
+   ${rtop.length?`<div><div class="rv-day">Gründe fürs Verschieben &amp; Löschen (30 Tage)</div>${rtop.map(([k,n])=>`<div class="rv-item"><span class="e">↪</span><span>${esc(k)}</span><b>${n}×</b></div>`).join('')}</div>${rc['Keine Energie']>=3?'<div class="note">„Keine Energie“ kommt öfter vor. Probier den Filter 🪫 leicht an solchen Tagen.</div>':''}`:''}`);
+}
+
+/* ---------- games ---------- */
+let G=null;
+function stopGame(){ if(G){G.stop&&G.stop();G=null} }
+function gamesSheet(){
+  stopGame(); const n=tokens(); const need=3-(S.totalDone%3);
+  const card=(k,e,t,d)=>`<button class="game" data-g="${k}" ${n<1?'disabled':''}><span class="e">${e}</span><b>${t}</b><span>${d}</span>${S.best[k]?`<span>Rekord: ${S.best[k]}</span>`:''}</button>`;
+  openSheet(head('Mini-Spiele','Pro 3 erledigte Aufgaben gibt es ein Spiel. Kurz spielen, dann weiter.')+
+   `<div class="token-line">${n?`🎟 ${n} ${n===1?'Spiel':'Spiele'} verfügbar`:`Noch ${need} ${need===1?'Aufgabe':'Aufgaben'} bis zum nächsten Spiel`}</div>
+   <div class="games">${card('bubbles','🫧','Blasen platzen','20 Sekunden, tippe so viele Blasen wie möglich')}${card('catch','🐠','Futter fangen','Lenk den Fisch zum Futter')}${card('memory','🐚','Meeres-Memory','Finde alle 6 Paare')}</div>`,sh=>{
+    sh.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{ if(tokens()<1)return; S.gamesUsed++; persist(); $('#token-n').textContent=tokens(); playGame(b.dataset.g) });
+  },stopGame);
+}
+function gameEnd(k,score,label){
+  stopGame(); const best=S.best[k]||0; const isBest=k==='memory'?(!best||score<best):score>best; if(isBest){S.best[k]=score;persist()}
+  $('#sheet').innerHTML=head('Geschafft!')+`<div class="big-e">${k==='bubbles'?'🫧':k==='catch'?'🐠':'🐚'}</div><p class="focus-title">${label}</p>${isBest?'<div class="note" style="text-align:center">🏆 Neuer Rekord!</div>':''}<div class="actions"><button class="btn acc" data-act="close">Zurück zu den Aufgaben</button></div>`;
+}
+function playGame(k){
+  if(k==='memory'){
+    const pool=['🐠','🐢','🐙','🪼','🦀','🐚','🐬','🦐','🐡'].sort(()=>Math.random()-.5).slice(0,6);
+    const cards=[...pool,...pool].sort(()=>Math.random()-.5).map((e,i)=>({i,e,open:false,got:false})); let first=null,lock=false,moves=0;
+    const draw=()=>{$('#sheet').innerHTML=head('Meeres-Memory')+`<div class="ghud"><span>Züge: ${moves}</span><span>${cards.filter(c=>c.got).length/2} / 6 Paare</span></div><div class="mem">${cards.map(c=>`<button data-c="${c.i}" class="${c.got?'got':c.open?'open':''}" aria-label="Karte">${c.open||c.got?c.e:''}</button>`).join('')}</div>`;
+      $('#sheet').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ if(lock)return; const c=cards[+b.dataset.c]; if(c.open||c.got)return; c.open=true;
+        if(!first){first=c;draw();return} moves++; if(first.e===c.e){first.got=c.got=true;first.open=c.open=false;first=null;draw(); if(cards.every(x=>x.got))setTimeout(()=>gameEnd('memory',moves,`Alle Paare in ${moves} Zügen`),400)}
+        else {lock=true;draw();setTimeout(()=>{first.open=c.open=false;first=null;lock=false;draw()},700)} })};
+    G={stop(){}}; draw(); return;
+  }
+  $('#sheet').innerHTML=head(k==='bubbles'?'Blasen platzen':'Futter fangen')+`<div class="ghud"><span id="g-score">0 Punkte</span><span id="g-time">20 s</span></div><canvas class="gcanvas" id="gc"></canvas><div class="note">${k==='bubbles'?'Tippe auf die Blasen. Goldene geben 3 Punkte.':'Wische oder bewege die Maus, damit der Fisch das Futter fängt.'}</div>`;
+  const cv=$('#gc'), ctx=cv.getContext('2d'); const dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=cv.clientWidth, H=cv.clientHeight; cv.width=W*dpr; cv.height=H*dpr; ctx.scale(dpr,dpr);
+  const css=getComputedStyle(document.documentElement); const w1=css.getPropertyValue('--water1').trim(), w2=css.getPropertyValue('--water2').trim(), ink=css.getPropertyValue('--ink').trim();
+  let score=0, end=performance.now()+20000, raf=0, last=performance.now(), spawn=0; const objs=[]; let fishX=W/2;
+  const ptr=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+  if(k==='bubbles'){cv.onpointerdown=e=>{const p=ptr(e);for(let i=objs.length-1;i>=0;i--){const o=objs[i];if(Math.hypot(o.x-p.x,o.y-p.y)<o.r+6){score+=o.gold?3:1;objs.splice(i,1);break}}}}
+  else {const mv=e=>{fishX=ptr(e).x}; cv.onpointermove=mv; cv.onpointerdown=mv}
+  const loop=now=>{const dt=Math.min(.05,(now-last)/1000); last=now; const left=Math.max(0,(end-now)/1000);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,w1);g.addColorStop(1,w2);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    spawn-=dt;
+    if(k==='bubbles'){ if(spawn<=0){spawn=.35;objs.push({x:rnd(25,W-25),y:H+30,r:rnd(16,30),v:rnd(50,110),gold:Math.random()<.12,ph:rnd(0,6)})}
+      for(let i=objs.length-1;i>=0;i--){const o=objs[i];o.y-=o.v*dt;o.ph+=dt*3;const x=o.x+Math.sin(o.ph)*6;if(o.y<-40){objs.splice(i,1);continue}
+        ctx.beginPath();ctx.arc(x,o.y,o.r,0,7);ctx.fillStyle=o.gold?'rgba(255,214,90,.55)':'rgba(255,255,255,.35)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=o.gold?'rgba(214,160,20,.9)':'rgba(255,255,255,.85)';ctx.stroke();
+        ctx.beginPath();ctx.arc(x-o.r*.35,o.y-o.r*.35,o.r*.22,0,7);ctx.fillStyle='rgba(255,255,255,.8)';ctx.fill();o.x=x-Math.sin(o.ph)*6}
+    } else {
+      if(spawn<=0){spawn=.45;objs.push({x:rnd(15,W-15),y:-10,v:rnd(70,140)})}
+      const fy=H-34; ctx.font='34px '+css.getPropertyValue('--emoji'); ctx.textAlign='center'; ctx.textBaseline='middle';
+      for(let i=objs.length-1;i>=0;i--){const o=objs[i];o.y+=o.v*dt; if(Math.abs(o.x-fishX)<28&&Math.abs(o.y-fy)<20){score++;objs.splice(i,1);continue} if(o.y>H+10){objs.splice(i,1);continue}
+        ctx.beginPath();ctx.arc(o.x,o.y,5,0,7);ctx.fillStyle='rgba(214,140,70,.9)';ctx.fill()}
+      ctx.fillText('🐠',fishX,fy);
+    }
+    $('#g-score').textContent=score+' Punkte'; $('#g-time').textContent=Math.ceil(left)+' s';
+    if(left<=0){gameEnd(k,score,score+' Punkte');return} raf=requestAnimationFrame(loop)};
+  G={stop(){cancelAnimationFrame(raf)}}; raf=requestAnimationFrame(loop);
+}
+
+/* ---------- aquarium canvas ---------- */
+const tank=(function(){
+  const cv=$('#tank'), ctx=cv.getContext('2d'); let W=0,H=0,dpr=1; const rt=new Map(); const parts=[]; const amb=[]; let col={}; let t0=performance.now(), last=t0, visible=true, raf=0;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+  function readCols(){const c=getComputedStyle(document.documentElement);['--water1','--water2','--sand','--sand2','--ray','--ink','--muted','--surface'].forEach(k=>col[k]=c.getPropertyValue(k).trim());col.emoji=c.getPropertyValue('--emoji')}
+  function size(){dpr=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  function fs(it){return it.tier===4?40:it.tier===3?32:it.type==='floor'?24:26}
+  function sync(){const ids=new Set(S.items.map(i=>i.id));for(const k of rt.keys())if(!ids.has(k))rt.delete(k);
+    S.items.forEach(it=>{if(!rt.has(it.id))rt.set(it.id,{x:it.x,y:it.y,dir:Math.random()<.5?-1:1,ph:Math.random()*6})}); if(reduce.matches)draw(performance.now(),0)}
+  function pos(it,r){const sandTop=H*.84; if(it.type==='floor')return{x:it.x*W,y:sandTop+6+((it.x*97)%1)*8}; return{x:r.x*W,y:12+r.y*(sandTop-30)}}
+  function draw(now,dt){
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,col['--water1']);g.addColorStop(1,col['--water2']);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    const tt=(now-t0)/1000;
+    ctx.fillStyle=col['--ray']; for(let i=0;i<4;i++){const x=W*(.15+i*.25)+Math.sin(tt*.3+i)*20;ctx.beginPath();ctx.moveTo(x-18,0);ctx.lineTo(x+18,0);ctx.lineTo(x+60,H);ctx.lineTo(x-10,H);ctx.closePath();ctx.fill()}
+    const sandTop=H*.84; ctx.fillStyle=col['--sand2'];ctx.beginPath();ctx.moveTo(0,H);for(let x=0;x<=W;x+=20)ctx.lineTo(x,sandTop+4+Math.sin(x*.03)*4);ctx.lineTo(W,H);ctx.fill();
+    ctx.fillStyle=col['--sand'];ctx.beginPath();ctx.moveTo(0,H);for(let x=0;x<=W;x+=20)ctx.lineTo(x,sandTop+10+Math.sin(x*.02+1)*5);ctx.lineTo(W,H);ctx.fill();
+    // ambient bubbles
+    if(!reduce.matches){ if(Math.random()<dt*2.5)amb.push({x:rnd(10,W-10),y:H*.85,r:rnd(1.5,4),v:rnd(18,40)});
+      ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1.2;for(let i=amb.length-1;i>=0;i--){const b=amb[i];b.y-=b.v*dt;if(b.y<-5){amb.splice(i,1);continue}ctx.beginPath();ctx.arc(b.x+Math.sin(b.y*.05)*3,b.y,b.r,0,7);ctx.stroke()} }
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    const order=[...S.items].sort((a,b)=>(a.type==='floor'?0:1)-(b.type==='floor'?0:1));
+    for(const it of order){const r=rt.get(it.id);if(!r)continue; const s=fs(it);
+      if(it.type==='swim'&&!reduce.matches){r.x+=r.dir*.035*it.sp*(it.tier>=3?.8:1)*dt;r.ph+=dt; if(r.x>.95){r.x=.95;r.dir=-1} if(r.x<.05){r.x=.05;r.dir=1} r.y=it.y+Math.sin(r.ph*.8)*.03}
+      if(it.type==='float'&&!reduce.matches){r.ph+=dt;r.y=it.y+Math.sin(r.ph*.6)*.08;r.x=it.x+Math.sin(r.ph*.2)*.03}
+      const p=pos(it,r); r.px=p.x; r.py=p.y; r.s=s;
+      ctx.save();ctx.translate(p.x,p.y); if(it.type==='swim'&&r.dir>0)ctx.scale(-1,1); ctx.font=s+'px '+col.emoji; ctx.fillText(it.e,0,0); ctx.restore();
+      if(it.name){ctx.font='700 11px Nunito, sans-serif';ctx.fillStyle=col['--ink'];ctx.globalAlpha=.75;ctx.fillText(it.name,p.x,p.y+s*.62+4);ctx.globalAlpha=1}
+    }
+    for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.life-=dt;if(q.life<=0){parts.splice(i,1);continue}q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy-=20*dt;ctx.globalAlpha=Math.min(1,q.life*1.5);ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,7);ctx.stroke();ctx.globalAlpha=1}
+    if(!S.items.length){ctx.fillStyle=col['--ink'];ctx.globalAlpha=.6;ctx.font='700 14px Nunito, sans-serif';ctx.fillText('Erledige eine Aufgabe, dann zieht hier jemand ein.',W/2,H*.45);ctx.globalAlpha=1}
+  }
+  function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now; if(visible&&!document.hidden)draw(now,dt); raf=requestAnimationFrame(loop)}
+  function burst(id){const r=rt.get(id); setTimeout(()=>{const x=r&&r.px!=null?r.px:W/2,y=r&&r.py!=null?r.py:H/2;for(let i=0;i<22;i++)parts.push({x,y,vx:rnd(-70,70),vy:rnd(-90,-20),r:rnd(2,6),life:rnd(.7,1.4)}); if(reduce.matches)draw(performance.now(),0)},60)}
+  function bubbles(){for(let i=0;i<10;i++)parts.push({x:rnd(20,W-20),y:H*.8,vx:rnd(-10,10),vy:rnd(-80,-40),r:rnd(2,5),life:rnd(.8,1.4)})}
+  cv.addEventListener('click',e=>{const b=cv.getBoundingClientRect();const x=e.clientX-b.left,y=e.clientY-b.top;let best=null,bd=1e9;
+    for(const it of S.items){const r=rt.get(it.id);if(!r||r.px==null)continue;const d=Math.hypot(r.px-x,r.py-y);if(d<bd&&d<(r.s||26)*.8+8){bd=d;best=it}} if(best)nameSheet(best.id)});
+  new ResizeObserver(()=>{size();draw(performance.now(),0)}).observe(cv);
+  try{new IntersectionObserver(es=>{visible=es[0].isIntersecting}).observe(cv)}catch(e){}
+  const mq=matchMedia('(prefers-color-scheme: dark)'); const rc=()=>{readCols();draw(performance.now(),0)}; mq.addEventListener&&mq.addEventListener('change',rc);
+  new MutationObserver(rc).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  readCols(); size(); raf=requestAnimationFrame(loop);
+  return{sync,burst,bubbles};
+})();
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b)return; const a=b.dataset.act, id=b.dataset.id;
+  if(a==='close')closeSheet();
+  else if(a==='done')complete(id);
+  else if(a==='expand'){const t=find(id);if(t&&t.steps.length){UI.open[id]=!UI.open[id];render()}else menuSheet(id)}
+  else if(a==='menu')menuSheet(id);
+  else if(a==='step')toggleStep(id,b.dataset.s);
+  else if(a==='new'){const k=b.dataset.when||UI.tab; formSheet(null,Object.assign({_k:k},defaultsFor(k)))}
+  else if(a==='tab'){UI.tab=b.dataset.v;saveUI();render();if(window.innerWidth<900)$('#tabs').scrollIntoView({block:'nearest'})}
+  else if(a==='f-energy'){UI.energy=b.dataset.v;saveUI();render()}
+  else if(a==='focus-open')focusSheet();
+  else if(a==='wheel-open')wheelSheet();
+  else if(a==='games-open')gamesSheet();
+  else if(a==='review-open')reviewSheet();
+  else if(a==='start-ex')startExamples();
+  else if(a==='start-empty'){S.started=true;commit();$('#quick').focus()}
+  else if(a==='push-nofit'){const c=capacity('heute');snap();const td=today();c.list.filter(t=>c.nofit.has(t.id)).forEach(t=>{t.date=addDays(td,1);S.log.push({type:'move',title:t.title,reason:'Keine Zeit',to:'morgen',date:td})});commit();toast(`${c.nofit.size} nach morgen verschoben. Jetzt passt es besser.`,[['Rückgängig',undo]])}
+});
+document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.actToggle){UI.open[d.dataset.actToggle]=d.open}},true);
+document.addEventListener('change',e=>{
+  if(e.target.id==='room-filter'){UI.room=e.target.value;saveUI();render()}
+  else if(e.target.id==='cap-end'&&e.target.value){S.settings.endTime=e.target.value;commit()}
+  else if(e.target.id==='cap-tom'){S.settings.tomorrowH=+e.target.value;commit()}
+});
+const qi=$('#quick');
+qi.addEventListener('input',()=>{$('#preview').innerHTML=previewChips(parseQuick(qi.value))});
+$('#quick-form').addEventListener('submit',e=>{e.preventDefault(); const o=parseQuick(qi.value); if(!o.title){qi.focus();return}
+  const base=defaultsFor(UI.tab==='datum'?'heute':UI.tab); const t={title:o.title,room:o.room||'allg',prio:o.prio||2,min:o.min||null,energy:o.energy||null,recur:o.recur||'none'};
+  if(o.when==='due'){t.when='due';t.due=o.due} else if(o.when==='someday')t.when='someday'; else if(o.when==='day'){t.when='day';t.date=o.date} else Object.assign(t,base);
+  addTask(t); qi.value=''; $('#preview').innerHTML='';
+  const b=bucketOf(S.tasks[S.tasks.length-1]); const map={heute:'Heute',morgen:'Morgen',datum:'Bis Datum',irgendwann:'Irgendwann',spaeter:'Bis Datum'};
+  toast(`Hinzugefügt zu ${map[b]}.`,[]);
+});
+
+/* ---------- toast ---------- */
+let tt=null;
+function toast(msg,btns){ const el=$('#toast'); $('#toast-msg').textContent=msg; const bx=$('#toast-btns'); bx.innerHTML='';
+  btns.forEach(([l,f])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>{el.hidden=true;f()};bx.appendChild(b)});
+  el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,btns.length?6500:3000) }
+
+/* day rollover + capacity refresh */
+let lastDay=today(); setInterval(()=>{ if(today()!==lastDay){lastDay=today()} if($('#overlay').hidden)render() },60000);
+
+initStore();
+})();
+</script>
+
+</body>
+</html>
